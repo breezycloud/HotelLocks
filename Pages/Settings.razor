@@ -1,0 +1,40 @@
+﻿@page "/settings"
+@using System.ComponentModel.DataAnnotations;
+
+<MudGrid>
+    <MudItem xs="12" sm="6">
+        <MudText Typo="Typo.h5">Card Settings</MudText>
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+            <MudFab Size="Size.Small" Style="width:200px;" Label="Read Card" Color="Color.Success"></MudFab>
+            <MudFab Size="Size.Small" Style="width:200px;" Label="Erase Card" Color="Color.Error"></MudFab>
+        </MudStack>
+    </MudItem>
+    <MudItem xs="12" sm="6">        
+        <MudText Typo="Typo.h5">Url Settings</MudText>
+        <MudTextField Label="Url" @bind-Value="Url" Variant="Variant.Outlined"></MudTextField>
+        <div class="d-flex align-center justify-center mt-2">
+            <MudFab Size="Size.Small" Style="width:200px;" Label="Save" OnClick="@Save" Color="Color.Primary"></MudFab>
+        </div>
+    </MudItem>
+
+</MudGrid>
+
+@code {
+    [Required(ErrorMessage = "Url is required")]
+    private string? Url { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Url = await File.ReadAllTextAsync(AppSetting.Url!);
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrEmpty(Url))
+        {
+            snackBar.Add("Url can not be empty", Severity.Warning);
+            return;
+        }
+        await File.WriteAllTextAsync(AppSetting.Url!, Url);
+    }
+}

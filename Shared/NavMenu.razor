@@ -1,0 +1,16 @@
+﻿<AuthorizeView>
+    <Authorized>
+        <MudButton Color="Color.Inherit" Href="index">Guest Card</MudButton>
+        <MudButton Color="Color.Inherit" Href="activate">Activate Card</MudButton>
+        <MudButton Color="Color.Inherit" Href="settings">Settings</MudButton>
+        @*<MudButton Color="Color.Inherit" OnClick="@LogOut">Log Out</MudButton>*@
+    </Authorized>
+</AuthorizeView>
+
+@code {
+
+    private async Task LogOut()
+    {
+        await Task.Delay(100);
+    }
+}

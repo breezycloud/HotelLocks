@@ -1,0 +1,112 @@
+﻿@page "/"
+@using HotelLocks.Shared.Models;
+@layout IndexLayout
+
+<div class="container-login">
+    <div class="wrap-login">
+        <MudPaper Outlined="true" Style="height: 410px; border-radius:10px; padding:15px;">
+            <EditForm Model="@loginModel" OnValidSubmit="@GetUser">
+                <MudGrid Spacing="2" Justify="Justify.Center">
+                    <MudItem xs="12">
+                        <div class="d-flex justify-center align-center">                            
+                            <svg width="5em" height="5em" viewBox="0 0 16 16" class="bi bi-person-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.468 12.37C12.758 11.226 11.195 10 8 10s-4.757 1.225-5.468 2.37A6.987 6.987 0 0 0 8 15a6.987 6.987 0 0 0 5.468-2.63z" />
+                                <path fill-rule="evenodd" d="M8 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+                                <path fill-rule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8z" />
+                            </svg>
+                        </div>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Align="Align.Center" Typo="Typo.body1">Enter your login credentials</MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="loginModel.Email" Variant="Variant.Outlined"
+                                      Placeholder="Email" For="@(() => loginModel.Email)">
+
+                        </MudTextField>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="loginModel.HashedPassword" Variant="Variant.Outlined"
+                                      Adornment="Adornment.End" Placeholder="Password"
+                                      For="@(() => loginModel.HashedPassword)" InputType="@PasswordInput"
+                                      AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="PasswordVisibilityClick">
+                        </MudTextField>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <div class="d-flex justify-center align-center">
+                            <MudFab Disabled="@isProcessing" ButtonType="ButtonType.Submit" Color="Color.Primary" Label="@processingLabel" Size="Size.Medium" Style="width:200px;">
+                            </MudFab>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </EditForm>
+        </MudPaper>
+
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public Task<AuthenticationState>? authenticationState { get; set; }
+    private UserCredential loginModel = new();
+    private bool isProcessing, isShow = false;
+    private string processingLabel = "LOGIN";
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+    InputType PasswordInput = InputType.Password;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userAuthenticationState = await authenticationState!;
+        var isAuthenticated = userAuthenticationState.User;
+        if (isAuthenticated.Identity!.IsAuthenticated)
+            nav.NavigateTo("/index");
+    }
+
+
+    async Task GetUser()
+    {
+        isProcessing = true;
+        processingLabel = "Processing...";
+        try
+        {
+            var response = await UserService.Login(loginModel);
+            if (response == null || string.IsNullOrEmpty(response.Token!))
+            {
+                snackBar.Add("Invalid login credentials", Severity.Error, option =>
+                {
+                    option.CloseAfterNavigation = true;
+                });
+            }
+            else
+            {
+                await CustomAuthenticationProvider.SetTokenAsync(response!);
+                nav.NavigateTo("/index", true);
+            }
+        }
+        catch
+        {
+            snackBar.Add("Invalid login credentials", Severity.Error, option =>
+            {
+                option.CloseAfterNavigation = true;
+            });
+        }
+        isProcessing = false;
+        processingLabel = "LOGIN";
+
+    }
+
+    void PasswordVisibilityClick()
+    {
+        if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
+}

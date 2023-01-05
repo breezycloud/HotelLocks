@@ -1,0 +1,27 @@
+﻿@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
+@using ProRFL.UI
+@using ProRFL.UI.Shared;
+@using ProRFL.UI.Handlers
+@using ProRFL.UI.Services
+@using ProRFL.UI.Data;
+@using MudBlazor
+
+@inject NavigationManager nav
+@inject IJSRuntime js
+@inject CustomAuthenticationStateProvider CustomAuthenticationProvider
+
+@inject ISnackbar snackBar
+@inject IDialogService Dialog
+
+@inject ICardService CardService
+@inject IBookingService BookingService
+@inject IUserService UserService
+
+

@@ -22,6 +22,7 @@ namespace HotelLocks.Shared.Models
         public string? HashedPassword { get; set; }
         public string? ImageUrl { get; set; }
         [NotMapped]
-        public string? Token { get; set; }        
+        public string? Token { get; set; }
+        [NotMapped] public string? Role { get; set; }
     }
 }

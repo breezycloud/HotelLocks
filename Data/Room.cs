@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +18,8 @@ namespace ProRFL.UI.Data
         public string? LockNo { get; set; }
         [Required(ErrorMessage = "Card No is required")]
         public int? CardNo { get; set; }
+        [NotMapped]
+        public int? dai { get; set; }
         public string? DepartureDate { get; set; }
         public DateTime? Date => string.IsNullOrEmpty(DepartureDate) ? new DateTime(DateTime.Now.Ticks) : DateTime.Parse(DepartureDate!);
     }

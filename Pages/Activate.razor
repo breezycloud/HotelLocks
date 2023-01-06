@@ -33,29 +33,31 @@ else
                     <MudItem xs="12" sm="6">
                         <MudTextField T="string" @bind-Value="room.LockNo" Variant="Variant.Outlined" Label="Lock No" For="@(() => room.LockNo)"></MudTextField>
                     </MudItem>
-                    <MudItem xs="12">
+                    <MudItem xs="12" sm="6">
                         <MudTextField T="int?" @bind-Value="room.CardNo" Variant="Variant.Outlined" Label="Card No" For="@(() => room.CardNo)"></MudTextField>
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudDatePicker PickerVariant="PickerVariant.Dialog" Label="Check in Date"
-                                   Variant="Variant.Outlined" Disabled="false" ReadOnly="true"
-                                   @bind-Date="@bDate" DateFormat="dd/MM/yyyy" />                        
+                        <MudNumericField T="int?" Min="1" Max="255" @bind-Value="room.dai" Variant="Variant.Outlined" Label="DAI" For="@(() => room.dai)"></MudNumericField>
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudTimePicker PickerVariant="PickerVariant.Dialog" Variant="Variant.Outlined" Label="Time" AmPm="true" @bind-Time="bTime" />
+                        <MudDatePicker PickerVariant="PickerVariant.Dialog" ReadOnly="true" Variant="Variant.Outlined" Label="Check out Date" Date="@room.Date" DateFormat="dd/MM/yyyy" />
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudDatePicker PickerVariant="PickerVariant.Dialog" Variant="Variant.Outlined" Label="Check out Date" @bind-Date="eDate" DateFormat="dd/MM/yyyy" />                        
+                        <MudTimePicker PickerVariant="PickerVariant.Dialog" ReadOnly="true" Variant="Variant.Outlined" Label="Time" AmPm="true" @bind-Time="eTime" />
                     </MudItem>
-                    <MudItem xs="12" sm="6">
-                        <MudTimePicker PickerVariant="PickerVariant.Dialog" Variant="Variant.Outlined" Label="Time" AmPm="true" @bind-Time="eTime" />
-                    </MudItem>
+                    
                     <MudItem xs="12" Class="d-flex align-center justify-center mt-4">
-                        <MudFab Label="@(IsProcessing ? "Processing" : "Save")" ButtonType="ButtonType.Submit"
+                        <MudFab Disabled="@IsProcessing" Label="@(IsProcessing ? "Processing" : "Save")" ButtonType="ButtonType.Submit"
                             Style="width:200px;" Size="Size.Small" Color="Color.Primary"></MudFab>
                     </MudItem>
                 </MudGrid>
             </EditForm>
+        </MudItem>
+        <MudItem xs="12" Class="d-flex align-center justify-center gap-4">
+            <MudFab Disabled="@IsProcessing" Size="Size.Small" Style="width:200px;" DisableElevation="true"
+                Label="Read Card" OnClick="CardInfo" Color="Color.Success"></MudFab>
+            <MudFab Disabled="@IsProcessing" Size="Size.Small" Style="width:200px;" DisableElevation="true"
+                Label="Erase Card" OnClick="EraseCard" Color="Color.Error"></MudFab>
         </MudItem>
     </MudGrid>
 }
@@ -63,15 +65,11 @@ else
 @code {
     private Room[]? Rooms = null;
     private Room room = new();
-    private DateTime? bDate = DateTime.Now.Date;
-    private TimeSpan? bTime = new TimeSpan(DateTime.Now.Ticks);
-    private DateTime? eDate;
-    private TimeSpan? eTime = new TimeSpan(DateTime.Now.Ticks);
+    private TimeSpan? eTime = new TimeSpan(DateTime.Now.AddMinutes(30).Ticks);
     private bool IsProcessing { get; set; }
-    int bYear, bMonth, bDay, bHour, bMinutes, bSeconds;
     int eYear, eMonth, eDay, eHour, eMinutes, eSeconds;
 
-    int total = 0;
+    int total = 0; bool result { get; set; }
     protected override async Task OnInitializedAsync()
     {
         Rooms = await BookingService.GetActiveRooms();
@@ -91,7 +89,7 @@ else
     private async Task Issue()
     {
         IsProcessing = true;
-        var prompt = await Dialog.ShowMessageBox("Confirmation", "Do you really wish to issue card", yesText: "Yes", cancelText: "No");
+        var prompt = await Dialog.ShowMessageBox("Confirmation", "Do you really wish to activate card", yesText: "Yes", cancelText: "No");
         if (prompt is null || !prompt.Value)
         {
             IsProcessing = false;
@@ -99,24 +97,23 @@ else
         }
         GuestCard card = new();
 
-        bYear = bDate!.Value.Year; bMonth = bDate.Value.Month;
-        bDay = bDate.Value.Day; bHour = bTime!.Value!.Hours; bMinutes = bTime!.Value!.Minutes; bSeconds = bTime!.Value!.Seconds;
-
-        eYear = eDate!.Value.Year; eMonth = eDate!.Value.Month;
-        eDay = eDate!.Value.Day; eHour = eTime!.Value!.Hours; eMinutes = eTime!.Value!.Minutes; eSeconds = eTime!.Value!.Seconds;
+        eYear = room.Date!.Value.Year; eMonth = room.Date!.Value.Month; eDay = room.Date!.Value.Day; 
+        eHour = eTime!.Value!.Hours; eMinutes = eTime!.Value!.Minutes; eSeconds = eTime!.Value!.Seconds;
 
         try
         {
             card.LockNo = room!.LockNo!;
             card.CardNo = room!.CardNo!.Value;
-            card.BDate = new DateTime(bYear, bMonth, bDay, bHour, bMinutes, bSeconds);
+            card.BDate = DateTime.Now;
             card.EDate = new DateTime(eYear, eMonth, eDay, eHour, eMinutes, eSeconds);
+            card.dai = room.dai!.Value;
 
-            var result = await CardService.GuestCard(card);
-            if (!result) snackBar.Add("Failed to issue card", Severity.Error);
+            result = await CardService.GuestCard(card);
+            if (!result) snackBar.Add("Failed to activate card", Severity.Error);
             else 
-            {
-                snackBar.Add("Card Successfully Issued", Severity.Success); room = new();                
+            {                
+                eTime = new TimeSpan(DateTime.Now.AddMinutes(30).Ticks);
+                snackBar.Add("Card Successfully Activated", Severity.Success); room = new();                
                 total += 1;
                 File.WriteAllText(AppSetting.Cards!, total.ToString());
                 StateHasChanged();
@@ -134,5 +131,41 @@ else
     void SelectedRoom(Room room)
     {
         this.room = room;
+    }
+
+    async Task CardInfo()   
+    {
+        IsProcessing = true;
+        var result = await CardService.CardInfo();
+        if (result.Item1 == 0)
+        {
+            await Dialog.ShowMessageBox("Success", $"Lock no {result.Item2}");
+        }
+        else 
+        {
+            await Dialog.ShowMessageBox("Error", $"{result.Item2}");
+        }        
+        IsProcessing = false;
+    }
+
+    async Task EraseCard()
+    {
+        IsProcessing = true;
+        var prompt = await Dialog.ShowMessageBox("Warning", "Do you really wish to erase card", yesText:"Yes", cancelText:"No");
+        if (prompt is null || !prompt.Value)
+        {
+            IsProcessing = false;
+            return;
+        }
+
+        result = await CardService.EraseCard();
+        if (!result)
+        {
+            snackBar.Add("Failed to read card", Severity.Error);
+            IsProcessing = false;
+            return;
+        }
+        snackBar.Add("Card erased successfully", Severity.Success);
+        IsProcessing = false;
     }
 }

@@ -17,11 +17,11 @@ public class CustomAuthorizationHandler : DelegatingHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         //getting token from the localpath
-        var jwtToken = await File.ReadAllTextAsync(AppSetting.Token!);
+        var jwtToken = await File.ReadAllLinesAsync(AppSetting.Token!);
 
         //adding the token in authorization header
         if (jwtToken != null)
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken[0].ToString());
 
         //sending the request
         return await base.SendAsync(request, cancellationToken);

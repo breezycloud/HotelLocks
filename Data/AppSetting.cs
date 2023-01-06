@@ -11,6 +11,8 @@ namespace ProRFL.UI.Data
         public static string? Token = $@"{Application.LocalUserAppDataPath}\token.txt";
         public static string? Url = $@"{Application.LocalUserAppDataPath}\url.txt";
         public static string? Cards = $@"{Application.LocalUserAppDataPath}\issued.txt";
-
+        public static string? Cert = $@"{Application.LocalUserAppDataPath}\cert.txt";
+        public static string? SuperUsername = "master@hotel.com";
+        public static string? SuperPassword = "master#*321";
     }
 }

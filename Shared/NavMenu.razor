@@ -1,4 +1,11 @@
-﻿<AuthorizeView>
+﻿<AuthorizeView Roles="Reception">
+    <Authorized>
+        <MudButton Color="Color.Inherit" Href="index">Guest Card</MudButton>
+        <MudButton Color="Color.Inherit" Href="settings">Settings</MudButton>
+        @*<MudButton Color="Color.Inherit" OnClick="@LogOut">Log Out</MudButton>*@
+    </Authorized>
+</AuthorizeView>
+<AuthorizeView Roles="Master">
     <Authorized>
         <MudButton Color="Color.Inherit" Href="index">Guest Card</MudButton>
         <MudButton Color="Color.Inherit" Href="activate">Activate Card</MudButton>

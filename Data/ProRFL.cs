@@ -60,7 +60,7 @@ public partial class ProRFL
     public static extern int GetCardTypeByCardDataStr(string CardDataStr, string CardType);
 
     [DllImport(NativeLib, CallingConvention = CallingConvention.StdCall)]
-    public static extern int GetGuestLockNoByCardDataStr(int dlsCoID, string CardDataStr, string LockNo);
+    public static extern int GetGuestLockNoByCardDataStr(int dlsCoID, string CardDataStr, [MarshalAs(UnmanagedType.LPStr)] StringBuilder LockNo);
 
     [DllImport(NativeLib, CallingConvention = CallingConvention.StdCall)]
     public static extern int GetGuestETimeByCardDataStr(int dlsCoID, string CardDataStr, string ETime);

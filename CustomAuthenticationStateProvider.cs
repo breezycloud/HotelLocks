@@ -24,22 +24,25 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        var token = await GetTokenAsync();
+        var auth = await GetTokenAsync();
+        string token = auth[0].ToString();
+        string role = auth[1].ToString();
 
-        if (string.IsNullOrWhiteSpace(token))
+        if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(role))
         {
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
-
+        
         var claims = new Claim[]
         {
-            new Claim("id", Guid.NewGuid().ToString())
+            new Claim(ClaimTypes.Name, "Master"),
+            new Claim(ClaimTypes.Role, role),            
         };
 
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt")));
     }
-
+    
     public async Task SetTokenAsync(UserCredential response)
     {
         if (response.Token is null || string.IsNullOrEmpty(response.Token))
@@ -48,17 +51,22 @@ public class CustomAuthenticationStateProvider : AuthenticationStateProvider
         }
         else
         {
-            await WriteTokenAsync(response.Token);
+            string[] res = new string[] { response.Token, response.Role! };
+            await WriteTokenAsync(res);
         }
 
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 
-    public async Task<string> GetTokenAsync()
-        => await File.ReadAllTextAsync(AppSetting.Token!);
+    public async Task<string[]> GetTokenAsync()
+    {
+        return await File.ReadAllLinesAsync(AppSetting.Token!);
+    }
     
-    public async Task WriteTokenAsync(string value)
-        => await File.WriteAllTextAsync(AppSetting.Token!, value);
+    public async Task WriteTokenAsync(string[] res)
+    {
+        await File.WriteAllLinesAsync(AppSetting.Token!, res);
+    }
 
     public void DeleteTokenAsync() =>
         File.Delete(AppSetting.Token!);

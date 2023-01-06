@@ -10,6 +10,7 @@ namespace ProRFL.UI.Data
     {
         public int CardNo { get; set; }
         public string? LockNo { get; set; }
+        public int dai { get; set; }
         public DateTime BDate { get; set; }
         public DateTime EDate { get; set; }
     }

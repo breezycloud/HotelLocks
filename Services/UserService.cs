@@ -1,9 +1,17 @@
 ﻿using HotelLocks.Shared.Models;
+using JWT.Algorithms;
+using JWT.Builder;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualBasic.ApplicationServices;
 using ProRFL.UI.Data;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -15,6 +23,7 @@ public interface IUserService
     ValueTask<bool> RegisterUser(UserCredential user);
     ValueTask UpdateUser(UserCredential user);
     ValueTask<UserCredential> Login(UserCredential model);
+    ValueTask<string> GenSHA512(string password);
 }
 
 public class UserService : IUserService
@@ -26,6 +35,35 @@ public class UserService : IUserService
     { 
         _http = http;
         _http.BaseAddress = new Uri(File.ReadAllText(AppSetting.Url!));
+    }    
+    public async ValueTask<string> GenSHA512(string password)
+    {
+        string jwt = "";
+        string certificate = await File.ReadAllTextAsync(AppSetting.Cert!);
+        try
+        {
+            var claim = new Claim[]
+            {
+                new Claim(ClaimTypes.Name, "Master"),
+                new Claim(ClaimTypes.Role, "Master")
+            };
+
+            var token = new JwtSecurityToken(
+                null,
+                null,
+                claim,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(certificate)),
+                SecurityAlgorithms.HmacSha512Signature));
+
+            jwt = new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message);
+        }
+
+        return await ValueTask.FromResult(jwt);
     }
 
     public async ValueTask<UserCredential> Login(UserCredential model)

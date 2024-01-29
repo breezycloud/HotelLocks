@@ -17,9 +17,9 @@ namespace ProRFL.UI.Data
         [Required(ErrorMessage = "Lock No is required")]
         public string? LockNo { get; set; }
         [Required(ErrorMessage = "Card No is required")]
-        public int? CardNo { get; set; }
+        public int CardNo { get; set; } = 1;
         [NotMapped]
-        public int? dai { get; set; }
+        public int? dai { get; set; } = 11;
         public string? DepartureDate { get; set; }
         public DateTime? Date => string.IsNullOrEmpty(DepartureDate) ? new DateTime(DateTime.Now.Ticks) : DateTime.Parse(DepartureDate!);
     }

@@ -1,4 +1,5 @@
 ﻿using HotelLocks.Shared.Models;
+using Microsoft.EntityFrameworkCore;
 using ProRFL.UI.Data;
 using System;
 using System.Collections.Generic;
@@ -20,17 +21,22 @@ namespace ProRFL.UI.Services
         ValueTask<bool> ReadCard();
         ValueTask<bool> EraseCard();
         ValueTask<bool> GuestCard(GuestCard card);
+        ValueTask AddCard(GuestCard card);
+        ValueTask<GuestCard> GetCard(string lockno);
+        Task<int> GetCardsIssued();
     }
     public class CardService : ICardService
     {
         private readonly HttpClient _http;
+        private AppDbContext _context;
         int result;
-        int dlsCoID = 1;
+        int dlsCoID = 8676;
         StringBuilder buffer = new();
-        public CardService(HttpClient http)
+        public CardService(HttpClient http, AppDbContext context)
         {
             _http = http;
             _http.BaseAddress = new Uri(File.ReadAllText(AppSetting.Url!));
+            _context = context;
         }
 
         public async ValueTask<(int, string)> CardInfo()
@@ -70,7 +76,10 @@ namespace ProRFL.UI.Services
 
             StringBuilder CardHexStr = new StringBuilder(128);
             result = Data.ProRFL.GuestCard(Data.ProRFL.flagUSB, dlsCoID, card.CardNo, card.dai, llock, pdoors, BDate, EDate, card.LockNo!, CardHexStr);
-            if (result == 0) return await ValueTask.FromResult(true);
+            if (result == 0) {
+                await AddCard(card);
+                return await ValueTask.FromResult(true); 
+            }
             else return await ValueTask.FromResult(false);
         }
 
@@ -81,9 +90,17 @@ namespace ProRFL.UI.Services
 
         public async ValueTask<bool> InitializeUSB()
         {
-            result = Data.ProRFL.initializeUSB(Data.ProRFL.flagUSB);
-            if (result == 0) return await ValueTask.FromResult(true);
-            else return await ValueTask.FromResult(false);
+            try
+            {
+                result = Data.ProRFL.initializeUSB(Data.ProRFL.flagUSB);
+                if (result == 0) return await ValueTask.FromResult(true);
+                else return await ValueTask.FromResult(false);
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.Message);
+            }
+            return false;
         }
 
         public ValueTask Buzzer()
@@ -107,6 +124,28 @@ namespace ProRFL.UI.Services
                 }
             }
             return await ValueTask.FromResult(true);
+        }
+
+        public async ValueTask<GuestCard> GetCard(string lockno)
+        {
+            var card = await _context.GuestCards.Where(x => x.LockNo == lockno).FirstOrDefaultAsync();
+            return card!;
+        }
+
+        public async ValueTask AddCard(GuestCard card)
+        {
+            _context.Update(card);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> GetCardsIssued()
+        {
+            int TotalCards = 0;
+            if (!File.Exists(AppSetting.Cards))
+                return TotalCards;
+            var file = await File.ReadAllTextAsync(AppSetting.Cards);
+            TotalCards = int.Parse(file);
+            return TotalCards;
         }
     }
 }

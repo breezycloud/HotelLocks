@@ -8,7 +8,10 @@ else
 {
     <MudGrid>
         <MudItem xs="12" sm="6">
-            <MudText Typo="Typo.h5">List of Rooms</MudText>
+            <MudStack Row="true" AlignItems="AlignItems.Stretch" Justify="Justify.SpaceBetween">
+                <MudText Typo="Typo.h5">List of Rooms</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Tertiary" OnClick="@OnInitializedAsync" ButtonType="ButtonType.Reset" />
+            </MudStack>
             <MudPaper Outlined="true" Elevation="0" Class="pa-5" Style="max-height:450px; overflow-y:auto">
                 <MudGrid Spacing="1">
                     @foreach (var item in Rooms)
@@ -28,16 +31,17 @@ else
                 <DataAnnotationsValidator />
                 <MudGrid Spacing="1">
                     <MudItem xs="12" sm="6">
-                        <MudTextField T="string" @bind-Value="room.Name" Variant="Variant.Outlined" Label="Name" For="@(() => room.Name)"></MudTextField>
+                        <MudTextField T="string" @bind-Value="room.Name" Variant="Variant.Outlined" Disabled="true" Label="Name" For="@(() => room.Name)"></MudTextField>
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudTextField T="string" @bind-Value="room.LockNo" Variant="Variant.Outlined" Label="Lock No" For="@(() => room.LockNo)"></MudTextField>
+                        <MudTextField T="string" @bind-Value="room.LockNo" Variant="Variant.Outlined" Disabled="true" Label="Lock No" For="@(() => room.LockNo)"></MudTextField>
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudTextField T="int?" @bind-Value="room.CardNo" Variant="Variant.Outlined" Label="Card No" For="@(() => room.CardNo)"></MudTextField>
+                        <MudNumericField T="int" Min="1" Max="10" Value="room.CardNo" Variant="Variant.Outlined" Label="Card No"
+                                     For="@(() => room.CardNo)" ValueChanged="@CardNoChanged"></MudNumericField>
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudNumericField T="int?" Min="1" Max="255" @bind-Value="room.dai" Variant="Variant.Outlined" Label="DAI" For="@(() => room.dai)"></MudNumericField>
+                        <MudTextField T="int?" Disabled="true" @bind-Value="room.dai" Variant="Variant.Outlined" Label="DAI" For="@(() => room.dai)"></MudTextField>
                     </MudItem>
                     <MudItem xs="12" sm="6">
                         <MudDatePicker PickerVariant="PickerVariant.Dialog" ReadOnly="true" Variant="Variant.Outlined" Label="Check out Date" Date="@room.Date" DateFormat="dd/MM/yyyy" />
@@ -45,20 +49,17 @@ else
                     <MudItem xs="12" sm="6">
                         <MudTimePicker PickerVariant="PickerVariant.Dialog" ReadOnly="true" Variant="Variant.Outlined" Label="Time" AmPm="true" @bind-Time="eTime" />
                     </MudItem>
-                    
-                    <MudItem xs="12" Class="d-flex align-center justify-center mt-4">
+                    <MudItem xs="12" Class="d-flex align-center justify-center mt-3 gap-4">
                         <MudFab Disabled="@IsProcessing" Label="@(IsProcessing ? "Processing" : "Save")" ButtonType="ButtonType.Submit"
                             Style="width:200px;" Size="Size.Small" Color="Color.Primary"></MudFab>
+                        <MudFab Disabled="@IsProcessing" Size="Size.Small" Style="width:200px;" DisableElevation="true"
+                            Label="Read Card" OnClick="CardInfo" Color="Color.Success"></MudFab>
+                        <MudFab Disabled="@IsProcessing" Size="Size.Small" Style="width:200px;" DisableElevation="true"
+                            Label="Erase Card" OnClick="EraseCard" Color="Color.Error"></MudFab>
                     </MudItem>
                 </MudGrid>
             </EditForm>
-        </MudItem>
-        <MudItem xs="12" Class="d-flex align-center justify-center gap-4">
-            <MudFab Disabled="@IsProcessing" Size="Size.Small" Style="width:200px;" DisableElevation="true"
-                Label="Read Card" OnClick="CardInfo" Color="Color.Success"></MudFab>
-            <MudFab Disabled="@IsProcessing" Size="Size.Small" Style="width:200px;" DisableElevation="true"
-                Label="Erase Card" OnClick="EraseCard" Color="Color.Error"></MudFab>
-        </MudItem>
+        </MudItem>        
     </MudGrid>
 }
 
@@ -73,16 +74,23 @@ else
     protected override async Task OnInitializedAsync()
     {
         Rooms = await BookingService.GetActiveRooms();
-        total = int.Parse(File.ReadAllText(AppSetting.Cards!));
+        total = await CardService.GetCardsIssued();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            bool result = await CardService.InitializeUSB();
-            if (!result) snackBar.Add("Failed to initialized device", Severity.Error);
-            else snackBar.Add("Device initialized successfully", Severity.Success);
+            try
+            {
+                bool result = await CardService.InitializeUSB();
+                if (!result) snackBar.Add("Failed to initialized device", Severity.Error);
+                else snackBar.Add("Device initialized successfully", Severity.Success);
+            }
+            catch
+            {
+                snackBar.Add("Failed to initialized device", Severity.Error);
+            }
         }        
     }
 
@@ -103,7 +111,7 @@ else
         try
         {
             card.LockNo = room!.LockNo!;
-            card.CardNo = room!.CardNo!.Value;
+            card.CardNo = room!.CardNo!;
             card.BDate = DateTime.Now;
             card.EDate = new DateTime(eYear, eMonth, eDay, eHour, eMinutes, eSeconds);
             card.dai = room.dai!.Value;
@@ -128,9 +136,24 @@ else
 
     }
 
-    void SelectedRoom(Room room)
+    async void SelectedRoom(Room room)
     {
+        var carExist = await CardService.GetCard(room.LockNo!);
+        if (carExist is not null && !string.IsNullOrEmpty(carExist.LockNo))
+        {
+            room.CardNo += 1;
+            room.dai -= 1;
+        }
         this.room = room;
+    }
+    int lastCardNo = 1;
+    void CardNoChanged(int value)
+    {
+        if (value > lastCardNo)
+            room.dai -= 1;
+        else
+            room.dai += 1;
+        room.CardNo = lastCardNo = value;
     }
 
     async Task CardInfo()   

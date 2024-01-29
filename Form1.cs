@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebView.WindowsForms;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using MudBlazor.Services;
 using ProRFL.UI.Data;
 using ProRFL.UI.Handlers;
 using ProRFL.UI.Services;
+using System.ComponentModel.Design;
 
 namespace ProRFL.UI
 {
@@ -18,7 +21,7 @@ namespace ProRFL.UI
             {
                 File.WriteAllText(AppSetting.Url!, "http://95.217.230.104:8083/");
             }
-            
+
             if (!File.Exists(AppSetting.Cards))
             {
                 File.WriteAllText(AppSetting.Cards!, "0");
@@ -52,20 +55,28 @@ namespace ProRFL.UI
             services.AddHttpClient<IUserService, UserService>(client => { client.BaseAddress = new Uri(File.ReadAllText(AppSetting.Url!)); });
             services.AddHttpClient<IBookingService, BookingService>(client => { client.BaseAddress = new Uri(File.ReadAllText(AppSetting.Url!)); });
             services.AddScoped<ICardService, CardService>();
+            services.AddSingleton<IAppSetting, AppSetting>();
+            services.AddSingleton<BackgroundJob>();
+
+            services.AddDbContext<AppDbContext>();
 
             services.AddScoped<AuthenticationStateProvider>(options => options.GetRequiredService<CustomAuthenticationStateProvider>());
             services.AddTransient<CustomAuthorizationHandler>();
             services.AddWindowsFormsBlazorWebView();
+            var provider = services.BuildServiceProvider();
+            var context = provider.GetRequiredService<AppDbContext>();
+            context.Database.EnsureCreated();
             webView.HostPage = @"wwwroot\index.html";
-            webView.Services = services.BuildServiceProvider();
+            webView.Services = provider;
             webView.RootComponents.Add<App>("#app");            
+            
         }
+
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             File.Delete(AppSetting.Token!);
             Environment.Exit(0);
-
         }
     }
 }

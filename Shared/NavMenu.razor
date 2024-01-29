@@ -1,8 +1,8 @@
-﻿<AuthorizeView Roles="Reception">
+﻿@inject IAppSetting app
+<AuthorizeView Roles="Reception">
     <Authorized>
         <MudButton Color="Color.Inherit" Href="index">Guest Card</MudButton>
-        <MudButton Color="Color.Inherit" Href="settings">Settings</MudButton>
-        @*<MudButton Color="Color.Inherit" OnClick="@LogOut">Log Out</MudButton>*@
+        <MudButton Color="Color.Inherit" OnClick="@(() => LogOut())">Log Out</MudButton>
     </Authorized>
 </AuthorizeView>
 <AuthorizeView Roles="Master">
@@ -10,14 +10,14 @@
         <MudButton Color="Color.Inherit" Href="index">Guest Card</MudButton>
         <MudButton Color="Color.Inherit" Href="activate">Activate Card</MudButton>
         <MudButton Color="Color.Inherit" Href="settings">Settings</MudButton>
-        @*<MudButton Color="Color.Inherit" OnClick="@LogOut">Log Out</MudButton>*@
+        <MudButton Color="Color.Inherit" OnClick="@(() => LogOut())">Log Out</MudButton>
     </Authorized>
 </AuthorizeView>
 
 @code {
-
-    private async Task LogOut()
+    private void LogOut()
     {
-        await Task.Delay(100);
+        app.ClearToken();
+        nav.NavigateTo("/", true);
     }
 }

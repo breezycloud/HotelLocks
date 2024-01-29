@@ -58,7 +58,16 @@
         var userAuthenticationState = await authenticationState!;
         var isAuthenticated = userAuthenticationState.User;
         if (isAuthenticated.Identity!.IsAuthenticated)
-            nav.NavigateTo("/index");
+        {
+            if (isAuthenticated.IsInRole("Master"))
+            {
+                nav.NavigateTo("/activate");
+            }
+            else
+            {
+                nav.NavigateTo("/index");
+            }
+        }        
     }
 
     UserCredential? response;
@@ -94,7 +103,14 @@
             if (!string.IsNullOrEmpty(response!.Token))
             {
                 await CustomAuthenticationProvider.SetTokenAsync(response!);
-                nav.NavigateTo("/index", true);
+                if (response!.Token == "Master")
+                {
+                    nav.NavigateTo("/activate", true);
+                }
+                else
+                {
+                    nav.NavigateTo("/index", true);
+                }                
             }            
         }
         catch

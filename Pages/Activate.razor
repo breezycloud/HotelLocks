@@ -136,20 +136,20 @@ else
 
     void SelectedRoom(Room room)
     {
-        // var carExist = await CardService.GetCard(room.LockNo!);
-        // if (carExist is not null)
-        // {
-        //     if (string.IsNullOrEmpty(carExist.LockNo))
-        //     {
-        //         snackBar.Add("Invalid Card lock number", Severity.Error);
-        //         return;
-        //     }
-        //     if (carExist.EDate <= DateTime.Now)
-        //     {
-        //         room.CardNo += 1;
-        //         room.dai -= 1;
-        //     }            
-        // }
+        var carExist = await CardService.GetCard(room.LockNo!);
+        if (carExist is not null)
+        {
+            if (string.IsNullOrEmpty(carExist.LockNo))
+            {
+                snackBar.Add("Invalid Card lock number", Severity.Error);
+                return;
+            }
+            if (carExist.EDate <= DateTime.Now)
+            {
+                room.CardNo += 1;
+                room.dai -= 1;
+            }            
+        }
         this.room = room;
     }
     int lastCardNo = 1;

@@ -140,11 +140,7 @@ namespace ProRFL.UI.Services
 
         public async Task<int> GetCardsIssued()
         {
-            int TotalCards = 0;
-            if (!File.Exists(AppSetting.Cards))
-                return TotalCards;
-            var file = await File.ReadAllTextAsync(AppSetting.Cards);
-            TotalCards = int.Parse(file);
+            int TotalCards = await _context.GuestCards.CountAsync();
             return TotalCards;
         }
     }

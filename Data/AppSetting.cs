@@ -18,12 +18,13 @@ namespace ProRFL.UI.Data
 
         public static string? Sqlite = $@"{Application.LocalUserAppDataPath}\locks.db";
         public static string? Token = $@"{Application.LocalUserAppDataPath}\token.txt";
-        public static string? Rooms = $@"C:\Users\nerdyamin\AppData\Local\ProRFL.UI\ProRFL.UI\1.0.0\data.txt";
+        public static string? Rooms = $@"C:\Users\nerdyamin\source\repos\ProRFL.UI\rooms.txt";
+        public static string? Activate = $@"C:\Users\nerdyamin\source\repos\ProRFL.UI\activate.txt";
         public static string? Url = $@"{Application.LocalUserAppDataPath}\url.txt";
         public static string? Cards = $@"{Application.LocalUserAppDataPath}\issued.txt";
         public static string? Cert = $@"{Application.LocalUserAppDataPath}\cert.txt";
         public static string? SuperUsername = "master@hotel.com";
-        public static string? SuperPassword = "master#*321";
+        public static string? SuperPassword = "master#123*";
 
         public AppSetting(NavigationManager nav)
         {
@@ -32,14 +33,14 @@ namespace ProRFL.UI.Data
 
         public void LogOut() 
         {
-            string[] strings = ["", ""];
+            string[] strings = new string[]{ "", "" };
             File.WriteAllLines(Token!, strings);
             _nav.NavigateTo("/", true);
         }
 
         public void ClearToken()
         {
-            string[] strings = ["", ""];
+            string[] strings = new string[] { "", "" };
             File.WriteAllLines(Token!, strings);
         }
     }

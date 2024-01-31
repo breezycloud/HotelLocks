@@ -120,8 +120,7 @@ else
             else
             {
                 snackBar.Add("Card Successfully Issued", Severity.Success); room = new();
-                total += 1;
-                File.WriteAllText(AppSetting.Cards!, total.ToString());
+                total += 1;                
                 StateHasChanged();
             }
         }
@@ -134,12 +133,13 @@ else
     async void SelectedRoom(Room room)
     {
         var carExist = await CardService.GetCard(room.LockNo!);
-        if (!string.IsNullOrEmpty(carExist.LockNo))
+        if (carExist is not null && !string.IsNullOrEmpty(carExist.LockNo))
         {
             room.CardNo += 1;
             room.dai -= 1;
         }
         this.room = room;
+        StateHasChanged();
     }
     int lastCardNo = 1;
     void CardNoChanged(int value)

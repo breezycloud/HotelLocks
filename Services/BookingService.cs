@@ -18,7 +18,11 @@ namespace ProRFL.UI.Services
     internal class BookingService : IBookingService
     {
         private readonly HttpClient _http;
-        Room[]? rooms = [];
+        Room[]? rooms = new Room[0];
+        JsonSerializerOptions Options = new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true,
+        };
         public BookingService(HttpClient http)
         {
             _http = http;
@@ -29,13 +33,10 @@ namespace ProRFL.UI.Services
         {
             try
             {
-                var stream = await _http.GetStreamAsync("locks/activate")!;
-                if (stream!.Length > 0) { return rooms; }
-                var document = JsonDocument.Parse(stream!);
-                var element = document.RootElement;
-                if (element.EnumerateObject().Count() > 0)
-                    rooms = JsonSerializer.Deserialize<Room[]>(element);
-                return rooms!;
+                var response = await _http.GetFromJsonAsync<Room[]>("locks/activate")!;
+                if (response == null)
+                    return rooms!;
+                rooms = response;
             }
             catch (Exception ex)
             {
@@ -48,13 +49,10 @@ namespace ProRFL.UI.Services
         {            
             try
             {
-                var stream = await _http.GetStreamAsync("locks/rooms")!;
-                if (stream!.Length > 0) { return rooms; }
-                var document = JsonDocument.Parse(stream!);
-                var element = document.RootElement;
-                if (element.EnumerateObject().Count() > 0)
-                    rooms = JsonSerializer.Deserialize<Room[]>(element);
-                return rooms!;
+                var response = await _http.GetFromJsonAsync<Room[]>("locks/rooms")!;
+                if (response == null)
+                    return rooms!;
+                rooms = response;
             }
             catch (Exception ex)
             {

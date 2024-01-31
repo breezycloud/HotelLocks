@@ -15,7 +15,7 @@ namespace ProRFL.UI.Shared
     {
         MudTheme DefaultTheme = new MudTheme
         {
-            Palette = new Palette 
+            Palette = new PaletteLight
             { 
                 AppbarBackground = "#1B6EC2",
                 Primary = "#1B6EC2"
